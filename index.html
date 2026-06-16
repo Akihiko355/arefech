@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dokumentasi Teknis: Area Effect GUI</title>
+    <title>Dokumentasi Teknis: Area Effect GUI & Zones</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -53,6 +53,7 @@
 
         h3 {
             color: #f1f5f9;
+            margin-top: 0;
         }
 
         p, li {
@@ -82,8 +83,14 @@
             gap: 20px;
         }
 
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
         @media (max-width: 768px) {
-            .grid { grid-template-columns: 1fr; }
+            .grid, .grid-3 { grid-template-columns: 1fr; }
         }
 
         .card {
@@ -92,6 +99,10 @@
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
+        }
+
+        .card-highlight {
+            border-left: 4px solid var(--accent);
         }
 
         /* Search & Table styling */
@@ -167,28 +178,53 @@
 
 <div class="container">
     <header>
-        <h1>✦ Area Effect GUI</h1>
+        <h1>✦ Area Effect GUI &amp; Zones</h1>
         <p>Dokumentasi Referensi Fitur Tambahan untuk <strong>AtlantisCore Plugin (Paper 26.1.2)</strong></p>
     </header>
 
-    <section class="grid">
-        <div class="card">
-            <h3>Informasi Dasar</h3>
-            <p><strong>Command:</strong> <code>/area effects &lt;area_name&gt;</code></p>
-            <p><strong>Permission:</strong> <code>atlantiscore.admin</code></p>
-            <p><strong>API Target:</strong> Paper 26.1.2 (Adventure API &amp; Legacy Component Serializer)</p>
-            <p><strong>Config Default Refresh:</strong> Diambil dari <code>area_defaults.effect_refresh_every</code> (Default: 3s)</p>
-        </div>
-        <div class="card">
-            <h3>Aturan Teknis GUI</h3>
+    <!-- SYSTEM 2: AREA EFFECT ZONES -->
+    <h2>🌐 Sistem 2: Area Effect Zones (Zona Efek)</h2>
+    <p>Sistem ini memungkinkan admin untuk membuat "zona aura" di dunia. Saat pemain masuk ke dalam zona ini, mereka akan otomatis mendapatkan efek pasif (misal: Haste atau Water Breathing) dan melihat pesan sambutan di layar (<em>Title</em>).</p>
+    
+    <div class="grid">
+        <div class="card card-highlight">
+            <h3>📐 Bentuk Fleksibel &amp; Vertikal</h3>
             <ul>
-                <li>Membatalkan seluruh <code>InventoryClickEvent</code> (Item tidak bisa dipindah).</li>
-                <li>Format tulisan wajib menggunakan sistem Ampersand (&amp;) melalui Adventure API. Dilarang keras memakai <code>ChatColor</code> lama.</li>
-                <li>Proses <em>In-place Refresh</em> GUI dilakukan dengan jeda Scheduler Bukkit agar tidak crash saat inventori dibuka di dalam event klik.</li>
+                <li><strong>Lingkaran (Circle):</strong> Pembuatan zona berdasarkan kalkulasi radius dari titik pusat.</li>
+                <li><strong>Persegi (Square):</strong> Pembuatan zona berdasarkan ukuran panjang x lebar.</li>
+                <li><strong>Batasan Tinggi Y:</strong> Secara default, zona mencakup 30 blok ke atas dan 30 blok ke bawah dari titik pusat, namun nilai ini sepenuhnya bisa dikustomisasi per area.</li>
             </ul>
         </div>
-    </section>
+        <div class="card card-highlight">
+            <h3>⚡ Deteksi &amp; Notifikasi Otomatis</h3>
+            <ul>
+                <li><strong>Deteksi Real-Time (Tick Task):</strong> Proses pemindaian kehadiran pemain dirancang sangat ringan, berjalan otomatis setiap 1 detik tanpa membebani performa inti server.</li>
+                <li><strong>Pesan Otomatis:</strong> Menampilkan pesan sambutan (Enter) atau pesan perpisahan (Exit) secara mulus via <em>Chat</em> atau <em>Screen Title</em> (Adventure API).</li>
+                <li><strong>Pembersihan Efek:</strong> Efek potion akan dihapus secara instan dan bersih dari tubuh pemain saat mereka melangkah keluar dari zona.</li>
+            </ul>
+        </div>
+    </div>
 
+    <!-- OVERVIEW & COMMAND -->
+    <h2>Manajemen GUI &amp; Perintah Admin</h2>
+    <div class="grid-3">
+        <div class="card">
+            <h3>Informasi Perintah</h3>
+            <p><strong>Command:</strong> <code>/area effects &lt;area_name&gt;</code></p>
+            <p><strong>Permission:</strong> <code>atlantiscore.admin</code></p>
+        </div>
+        <div class="card">
+            <h3>Konfigurasi</h3>
+            <p><strong>API Target:</strong> Paper 26.1.2</p>
+            <p><strong>Refresh Default:</strong> Diambil dari berkas config <code>area_defaults.effect_refresh_every</code> (Default: 3s)</p>
+        </div>
+        <div class="card">
+            <h3>Keamanan Event</h3>
+            <p>Membatalkan seluruh <code>InventoryClickEvent</code> untuk mencegah eksploitasi pengambilan atau pemindahan item keluar dari inventori menu.</p>
+        </div>
+    </div>
+
+    <!-- PLAYER FLOW -->
     <h2>Alur Navigasi Player (Flow)</h2>
     <div class="card">
         <p><strong>1. Jalankan Perintah:</strong> Admin mengetik command untuk membuka <strong>GUI 1 (Daftar Efek)</strong>.</p>
@@ -209,6 +245,7 @@
         </p>
     </div>
 
+    <!-- EFFECT TABLE SECTION -->
     <h2>Tabel Batasan Efek (Hardcoded Max Level)</h2>
     <p>Gunakan kolom pencarian di bawah untuk memfilter nama efek secara instan. Efek yang tidak terdaftar otomatis memiliki default Max Level = 3.</p>
     
@@ -227,6 +264,7 @@
                 </tr>
             </thead>
             <tbody>
+                <!-- Beacon Effects -->
                 <tr><td>SPEED</td><td>5</td><td><span class="badge badge-beacon">[BEACON] Tier 1</span></td><td>Ikon khusus &quot;&amp;6⬛ &amp;eSpeed &amp;7[Beacon]&quot;</td></tr>
                 <tr><td>HASTE</td><td>3</td><td><span class="badge badge-beacon">[BEACON] Tier 1</span></td><td>Ikon khusus &quot;&amp;6⬛ &amp;eHaste &amp;7[Beacon]&quot;</td></tr>
                 <tr><td>RESISTANCE</td><td>5</td><td><span class="badge badge-beacon">[BEACON] Tier 2</span></td><td>Ikon khusus &quot;&amp;6⬛ &amp;eResistance &amp;7[Beacon]&quot;</td></tr>
@@ -234,6 +272,7 @@
                 <tr><td>STRENGTH</td><td>3</td><td><span class="badge badge-beacon">[BEACON] Tier 3</span></td><td>Ikon khusus &quot;&amp;6⬛ &amp;eStrength &amp;7[Beacon]&quot;</td></tr>
                 <tr><td>REGENERATION</td><td>5</td><td><span class="badge badge-beacon">[BEACON] Tier 4</span></td><td>Secondary slot. Ikon khusus + Efek Kilau (Glow)</td></tr>
                 
+                <!-- Regular Effects -->
                 <tr><td>SLOWNESS</td><td>6</td><td><span class="badge badge-negative">Negative</span></td><td>Master Potion memberikan IV</td></tr>
                 <tr><td>MINING_FATIGUE</td><td>3</td><td><span class="badge badge-negative">Negative</span></td><td>-</td></tr>
                 <tr><td>INSTANT_HEALTH</td><td>5</td><td><span class="badge badge-positive">Positive</span></td><td>Heal per level</td></tr>
@@ -271,6 +310,7 @@
         </table>
     </div>
 
+    <!-- DATA MODEL YAML -->
     <h2>Struktur Penyimpanan Data (areas.yml)</h2>
     <div class="card">
         <p>Sistem menyimpan daftar efek pasif di dalam berkas <code>areas.yml</code> dengan format berikut:</p>
